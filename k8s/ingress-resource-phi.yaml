@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: inference-ingress
+  namespace: phi-3-mini
+spec:
+  ingressClassName: nginx-internal
+  rules:
+  - host: store-front.private.contoso.com
+    http:
+      paths:
+      - path: /chat
+        pathType: Prefix
+        backend:
+          service:
+            name: workspace-phi-3-mini
+            port:
+              number: 80

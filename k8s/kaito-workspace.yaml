@@ -1,0 +1,13 @@
+apiVersion: kaito.sh/v1alpha1
+kind: Workspace
+metadata:
+  name: workspace-phi-3-mini
+  namespace: phi-3-mini
+resource:
+  instanceType: "Standard_NC8as_T4_v3"
+  labelSelector: 
+    matchLabels:
+      apps: phi-3-mini
+inference:
+  preset:
+    name: phi-3-mini-4k-instruct

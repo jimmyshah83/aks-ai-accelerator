@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama70binstruct-deploy
+  namespace: llama70binstruct
+  labels:
+    app: llama70binstruct
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llama70binstruct
+  template:
+    metadata:
+      labels:
+        app: llama70binstruct
+    spec:
+      tolerations:
+      - key: "sku"
+        operator: "Equal"
+        value: "gpu"
+        effect: "NoSchedule"
+      volumes:
+      - name: cache-volume
+        persistentVolumeClaim:
+          claimName: llama70binstruct-pvc
+      # vLLM needs to access the host's shared memory for tensor parallel inference.
+      - name: shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: "4Gi"
+      containers:
+      - name: llama70binstruct
+        image: vllm/vllm-openai:latest
+        command: ["/bin/sh", "-c"]
+        args: [
+          "vllm serve meta-llama/Llama-3.3-70B-Instruct --trust-remote-code --tensor-parallel-size 2"
+        ]
+        env:
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token-secret
+              key: token
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: "6"
+            memory: 50G
+            nvidia.com/gpu: "1"
+          requests:
+            cpu: "4"
+            memory: 30G
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - mountPath: /root/.cache/huggingface
+          name: cache-volume
+        - name: shm
+          mountPath: /dev/shm
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 5
