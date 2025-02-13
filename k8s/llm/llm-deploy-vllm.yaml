@@ -5,7 +5,7 @@ metadata:
     app: llama-33-70b-instruct-hf
     kubernetes.azure.com/scalesetpriority: spot
     purpose: llama-demo
-    run: llama-33-70b-instruct-hf
+    run: llama-33-70b-instruct-hf 
   name: llama-33-70b-instruct-hf
   namespace: llama
 spec:
@@ -25,30 +25,24 @@ spec:
         run: llama-33-70b-instruct-hf
     spec:
       containers:
-      - command:
-        - text-generation-launcher
-        - --model-id
-        - meta-llama/Llama-3.3-70B-Instruct
-        - --quantize
-        - bitsandbytes
+      - command: ["/bin/sh", "-c"]
+        args: [
+          "vllm serve meta-llama/Llama-3.2-3B-Instruct --trust-remote-code --dtype float16 --max-model-len 4096"
+        ]
         env:
-        - name: RUST_BACKTRACE
-          value: "1"
         - name: HUGGING_FACE_HUB_TOKEN
           valueFrom:
             secretKeyRef:
               key: token
               name: hf-token-secret
-        image: ghcr.io/huggingface/text-generation-inference:3.1.0
-        name: text-generation-inference
+        image: vllm/vllm-openai:latest
+        name: tllama-33-70b-instruct-hf
         ports:
         - containerPort: 80
           name: http
         resources:
           limits:
-            nvidia.com/gpu: 2
-          requests:
-            nvidia.com/gpu: 2
+            nvidia.com/gpu: 4
         volumeMounts:
         - mountPath: /data
           name: llama370b
@@ -71,5 +65,5 @@ spec:
           claimName: pvc-llama370b-instruct-hf
       - emptyDir:
           medium: Memory
-          sizeLimit: 1Gi
+          sizeLimit: 10Gi
         name: shm

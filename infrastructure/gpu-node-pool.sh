@@ -5,7 +5,7 @@ RESOURCE_GROUP_NAME="rg-genai-accelerator-dev-cc-01"
 AKS_CLUSTER_NAME="genai-cluster-dev-cc-01"
 NODE_POOL_NAME="gpunp01"
 VM_SIZE="Standard_NC24s_v3"
-NODE_COUNT=3
+NODE_COUNT=4
 
 # Create spot node pool
 az aks nodepool add \
