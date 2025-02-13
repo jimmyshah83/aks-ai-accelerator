@@ -19,6 +19,7 @@ To Deploy N series GPUs, one needs approval to enable N series on VMs. [See Here
 - Observability and monitoring
 - Enable [mtls](https://techcommunity.microsoft.com/blog/azurepaasblog/mtls-between-aks-and-api-management/1813887) between APIM and NGINX can be implemented using
 - install the Nvidia device plugin for kubernetes [k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin?tab=readme-ov-file)
+- install KubeRay for distributed inference
 
 <!-- Virtual Network Create a virtual network (/23 with 2 subnets (/24) for AKS and APIM and /27 for Bastion) -->
 <!-- Create a Bastion host in the Bastion subnet -->

@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # Variables
-RESOURCE_GROUP="rg-genai-accelerator-dev-cc-01"
-CLUSTER_NAME="genai-cluster-dev-cc-01"
+RESOURCE_GROUP_NAME="rg-genai-accelerator-dev-cc-01"
+AKS_CLUSTER_NAME="genai-cluster-dev-cc-01"
 NODE_POOL_NAME="gpunp01"
-NODE_VM_SIZE="Standard_NC6s_v3"
-NODE_COUNT=2
+VM_SIZE="Standard_NC24s_v3"
+NODE_COUNT=3
 
-# Create a GPU node pool in the AKS cluster
+# Create spot node pool
 az aks nodepool add \
-    --resource-group $RESOURCE_GROUP \
-    --cluster-name $CLUSTER_NAME \
+    --resource-group $RESOURCE_GROUP_NAME \
+    --cluster-name $AKS_CLUSTER_NAME \
     --name $NODE_POOL_NAME \
-    --node-vm-size $NODE_VM_SIZE \
     --node-count $NODE_COUNT \
-    --enable-cluster-autoscaler \
-    --min-count 2 \
-    --max-count 4 \
-    --node-taints sku=gpu:NoSchedule
+    --node-vm-size $VM_SIZE \
+    --node-taints sku=gpu:NoSchedule \
+    --priority Spot \
+    --labels purpose=llama-demo \
+    --eviction-policy Delete

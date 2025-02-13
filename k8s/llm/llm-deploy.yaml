@@ -1,72 +1,75 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: llama70binstruct-deploy
-  namespace: llama70binstruct
   labels:
-    app: llama70binstruct
+    app: llama-33-70b-instruct-hf
+    kubernetes.azure.com/scalesetpriority: spot
+    purpose: llama-demo
+    run: llama-33-70b-instruct-hf
+  name: llama-33-70b-instruct-hf
+  namespace: llama
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: llama70binstruct
+      app: llama-33-70b-instruct-hf
+      kubernetes.azure.com/scalesetpriority: spot
+      purpose: llama-demo
+      run: llama-33-70b-instruct-hf
   template:
     metadata:
       labels:
-        app: llama70binstruct
+        app: llama-33-70b-instruct-hf
+        kubernetes.azure.com/scalesetpriority: spot
+        purpose: llama-demo
+        run: llama-33-70b-instruct-hf
     spec:
-      tolerations:
-      - key: "sku"
-        operator: "Equal"
-        value: "gpu"
-        effect: "NoSchedule"
-      volumes:
-      - name: cache-volume
-        persistentVolumeClaim:
-          claimName: llama70binstruct-pvc
-      # vLLM needs to access the host's shared memory for tensor parallel inference.
-      - name: shm
-        emptyDir:
-          medium: Memory
-          sizeLimit: "4Gi"
       containers:
-      - name: llama70binstruct
-        image: vllm/vllm-openai:latest
-        command: ["/bin/sh", "-c"]
-        args: [
-          "vllm serve meta-llama/Llama-3.3-70B-Instruct --trust-remote-code --tensor-parallel-size 2"
-        ]
+      - command:
+        - text-generation-launcher
+        - --model-id
+        - meta-llama/Llama-3.3-70B-Instruct
+        - --quantize
+        - bitsandbytes
         env:
+        - name: RUST_BACKTRACE
+          value: "1"
         - name: HUGGING_FACE_HUB_TOKEN
           valueFrom:
             secretKeyRef:
-              name: hf-token-secret
               key: token
+              name: hf-token-secret
+        image: ghcr.io/huggingface/text-generation-inference:3.1.0
+        name: text-generation-inference
         ports:
-        - containerPort: 8000
+        - containerPort: 80
+          name: http
         resources:
           limits:
-            cpu: "6"
-            memory: 50G
-            nvidia.com/gpu: "1"
+            nvidia.com/gpu: 2
           requests:
-            cpu: "4"
-            memory: 30G
-            nvidia.com/gpu: "1"
+            nvidia.com/gpu: 2
         volumeMounts:
-        - mountPath: /root/.cache/huggingface
-          name: cache-volume
-        - name: shm
-          mountPath: /dev/shm
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 60
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 60
-          periodSeconds: 5
+        - mountPath: /data
+          name: llama370b
+        - mountPath: /dev/shm
+          name: shm
+      nodeSelector:
+        purpose: llama-demo
+      tolerations:
+      - effect: NoSchedule
+        key: kubernetes.azure.com/scalesetpriority
+        operator: Equal
+        value: spot
+      - effect: NoSchedule
+        key: sku
+        operator: Equal
+        value: gpu
+      volumes:
+      - name: llama370b
+        persistentVolumeClaim:
+          claimName: pvc-llama370b-instruct-hf
+      - emptyDir:
+          medium: Memory
+          sizeLimit: 1Gi
+        name: shm

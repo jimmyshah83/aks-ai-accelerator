@@ -1,13 +1,15 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: llama70binstruct-pvc
-  namespace: llama70binstruct
+  labels:
+    kubernetes.azure.com/scalesetpriority: spot
+    purpose: llama-demo
+  name: pvc-llama370b-instruct-hf
+  namespace: llama
 spec:
   accessModes:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 50Gi
-  storageClassName: default
-  volumeMode: Filesystem
+      storage: 500Gi
+  storageClassName: managed-csi-premium
