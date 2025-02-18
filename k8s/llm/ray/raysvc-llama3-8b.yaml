@@ -2,7 +2,6 @@ apiVersion: ray.io/v1
 kind: RayService
 metadata:
   name: llama-3-8b
-  namespace: llama
 spec:
   serveConfigV2: |
     applications:
@@ -13,31 +12,34 @@ spec:
       - name: VLLMDeployment
         num_replicas: 1
         ray_actor_options:
-          num_cpus: 8
+          num_cpus: 16
           # NOTE: num_gpus is set automatically based on TENSOR_PARALLELISM
       runtime_env:
         working_dir: "https://github.com/ray-project/kuberay/archive/master.zip"
         pip: ["vllm==0.6.1.post2"]
         env_vars:
-          MODEL_ID: "meta-llama/Llama-3.2-3B-Instruct"
-          TENSOR_PARALLELISM: "2"
+          MODEL_ID: "meta-llama/Meta-Llama-3-8B-Instruct"
+          TENSOR_PARALLELISM: "4"
           PIPELINE_PARALLELISM: "1"
+          DTYPE: "half"
   rayClusterConfig:
     headGroupSpec:
       rayStartParams:
         dashboard-host: '0.0.0.0'
       template:
         spec:
+          nodeSelector:
+            purpose: ray-head
           containers:
           - name: ray-head
             image: rayproject/ray-ml:2.33.0.914af0-py311
             resources:
               limits:
-                cpu: "2"
-                memory: "8Gi"
+                cpu: "8"
+                memory: "16Gi"
               requests:
-                cpu: "2"
-                memory: "8Gi"
+                cpu: "8"
+                memory: "16Gi"
             ports:
             - containerPort: 6379
               name: gcs-server
@@ -51,43 +53,40 @@ spec:
             - name: HUGGING_FACE_HUB_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: hf-token-secret
                   key: token
+                  name: hf-token-secret                  
+          tolerations:
+            - effect: NoSchedule
+              key: sku
+              operator: Equal
+              value: ray
     workerGroupSpecs:
     - replicas: 1
-      minReplicas: 0
+      minReplicas: 1
       maxReplicas: 4
       groupName: gpu-group
       rayStartParams: {}
       template:
         spec:
+          nodeSelector:
+            purpose: llama-demo
           containers:
           - name: llm
             image: rayproject/ray-ml:2.33.0.914af0-py311
-            command: ["/bin/sh", "-c"]
-            args: [ "--dtype float16"]
             env:
             - name: HUGGING_FACE_HUB_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: hf-token-secret
                   key: token
+                  name: hf-token-secret
             resources:
               limits:
-                cpu: "8"
-                memory: "20Gi"
-                nvidia.com/gpu: "2"
+                nvidia.com/gpu: "4"
               requests:
-                cpu: "8"
-                memory: "20Gi"
-                nvidia.com/gpu: "2"
+                nvidia.com/gpu: "4"
           # Please add the following taints to the GPU node.
           tolerations:
-          - effect: NoSchedule
-            key: kubernetes.azure.com/scalesetpriority
-            operator: Equal
-            value: spot
-          - effect: NoSchedule
-            key: sku
-            operator: Equal
-            value: gpu
+            - effect: NoSchedule
+              key: sku
+              operator: Equal
+              value: gpu

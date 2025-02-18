@@ -21,6 +21,23 @@ To Deploy N series GPUs, one needs approval to enable N series on VMs. [See Here
 - install the Nvidia device plugin for kubernetes [k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin?tab=readme-ov-file)
 - install KubeRay for distributed inference
 
+<!-- 
+To use vLLM on multiple nodes, you need to start ray on all nodes and set the environment variable on all nodes.
+
+The steps are:
+
+start ray on the Head Node
+ ray start --head --port 6379
+start ray the other nodes
+ray start --address="head_node_IP:6379"
+Set the envrionment on all nodes
+Download model on all node and the same path, of course you download on the fly
+start vLLM on anynode with tensor_parallel_size=$GPU_COUNT --engine-use-ray
+-->
+
+
+<!-- Infrastructure setup -->
+
 <!-- Virtual Network Create a virtual network (/23 with 2 subnets (/24) for AKS and APIM and /27 for Bastion) -->
 <!-- Create a Bastion host in the Bastion subnet -->
 <!-- Create NSG to allow APIM deployment inbound connectivity -->

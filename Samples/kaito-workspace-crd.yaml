@@ -1,0 +1,149 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: workspaces.v1alpha1.kaito.microsoft.com
+spec:
+  group: kaito.microsoft.com
+  names:
+    kind: Workspace
+    listKind: WorkspaceList
+    plural: workspaces
+    singular: workspace
+    shortNames:
+      - wk
+      - wks
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            apiVersion:
+              type: string
+              enum:
+                - kaito.microsoft.com/v1alpha1
+            kind:
+              type: string
+              enum:
+                - Workspace
+            metadata:
+              type: object
+            spec:
+              type: object
+              properties:
+                resource:
+                  type: object
+                  properties:
+                    count:
+                      type: integer
+                      description: "The required number of GPU nodes."
+                      default: 1
+                    instanceType:
+                      type: string
+                      description: "The GPU node SKU."
+                      default: "Standard_NC24ads_A100_v4"
+                    labelSelector:
+                      type: object
+                      description: "The required labels for the GPU nodes."
+                    preferredNodes:
+                      type: array
+                      items:
+                        type: string
+                      description: "Optional list of preferred nodes."
+                inference:
+                  type: object
+                  properties:
+                    preset:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: "The name of the supported model."
+                        accessMode:
+                          type: string
+                          enum:
+                            - public
+                            - private
+                          description: "Whether the model image is public or private."
+                          default: public
+                        presetOptions:
+                          type: object
+                          properties:
+                            image:
+                              type: string
+                              description: "The name of the containerized model image."
+                            imagePullSecrets:
+                              type: array
+                              items:
+                                type: string
+                              description: "Secrets for pulling the model image."
+                    template:
+                      type: object
+                      description: "Custom Pod template for the inference service."
+                    config:
+                      type: string
+                      description: "Name of the ConfigMap containing inference arguments."
+                    adapters:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          source:
+                            type: object
+                            description: "Where to obtain the adapter data."
+                          strength:
+                            type: string
+                            description: "Multiplier for adapter weights."
+                tuning:
+                  type: object
+                  properties:
+                    preset:
+                      type: object
+                      description: "Preset model for tuning."
+                    method:
+                      type: string
+                      enum:
+                        - lora
+                        - qlora
+                      description: "Tuning method (e.g., lora, qlora)."
+                    config:
+                      type: string
+                      description: "Name of the ConfigMap containing tuning arguments."
+                    input:
+                      type: object
+                      description: "Input data source for tuning."
+                    output:
+                      type: object
+                      description: "Output destination for tuning results."
+              required:
+                - resource
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Instance
+          type: string
+          jsonPath: .spec.resource.instanceType
+          description: "The GPU node SKU."
+        - name: ResourceReady
+          type: string
+          jsonPath: .status.conditions[?(@.type=="ResourceReady")].status
+          description: "Whether the resource is ready."
+        - name: InferenceReady
+          type: string
+          jsonPath: .status.conditions[?(@.type=="InferenceReady")].status
+          description: "Whether inference is ready."
+        - name: JobStarted
+          type: string
+          jsonPath: .status.conditions[?(@.type=="JobStarted")].status
+          description: "Whether the job has started."
+        - name: WorkspaceSucceeded
+          type: string
+          jsonPath: .status.conditions[?(@.type=="WorkspaceSucceeded")].status
+          description: "Whether the workspace succeeded."
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+          description: "Age of the workspace."
