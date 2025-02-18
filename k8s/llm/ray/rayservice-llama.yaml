@@ -1,7 +1,7 @@
 apiVersion: ray.io/v1
 kind: RayService
 metadata:
-  name: llama-3-8b
+  name: llama-3-70b
   namespace: llama
 spec:
   serveConfigV2: |
@@ -12,17 +12,16 @@ spec:
       deployments:
       - name: VLLMDeployment
         num_replicas: 1
-        ray_actor_options:
-          num_cpus: 8
-          # NOTE: num_gpus is set automatically based on TENSOR_PARALLELISM
       runtime_env:
         working_dir: "https://github.com/ray-project/kuberay/archive/master.zip"
-        pip: ["vllm==0.6.1.post2"]
+        pip: ["vllm==0.5.4"]
         env_vars:
-          MODEL_ID: "meta-llama/Llama-3.2-3B-Instruct"
+          MODEL_ID: "meta-llama/Llama-3.3-70B-Instruct"
           TENSOR_PARALLELISM: "2"
-          PIPELINE_PARALLELISM: "1"
+          PIPELINE_PARALLELISM: "4"
   rayClusterConfig:
+    autoscalerOptions:
+      upscalingMode: Default
     headGroupSpec:
       rayStartParams:
         dashboard-host: '0.0.0.0'
@@ -54,34 +53,29 @@ spec:
                   name: hf-token-secret
                   key: token
     workerGroupSpecs:
-    - replicas: 1
+    - replicas: 2
       minReplicas: 0
       maxReplicas: 4
       groupName: gpu-group
       rayStartParams: {}
       template:
         spec:
+          nodeSelector:
+            purpose: llama-demo
           containers:
           - name: llm
             image: rayproject/ray-ml:2.33.0.914af0-py311
-            command: ["/bin/sh", "-c"]
-            args: [ "--dtype float16"]
+            resources:
+              limits:
+                nvidia.com/gpu: 4
+              requests:
+                nvidia.com/gpu: 1
             env:
             - name: HUGGING_FACE_HUB_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: hf-token-secret
                   key: token
-            resources:
-              limits:
-                cpu: "8"
-                memory: "20Gi"
-                nvidia.com/gpu: "2"
-              requests:
-                cpu: "8"
-                memory: "20Gi"
-                nvidia.com/gpu: "2"
-          # Please add the following taints to the GPU node.
           tolerations:
           - effect: NoSchedule
             key: kubernetes.azure.com/scalesetpriority
