@@ -21,7 +21,6 @@ spec:
           MODEL_ID: "meta-llama/Meta-Llama-3-8B-Instruct"
           TENSOR_PARALLELISM: "4"
           PIPELINE_PARALLELISM: "1"
-          DTYPE: "half"
   rayClusterConfig:
     headGroupSpec:
       rayStartParams:

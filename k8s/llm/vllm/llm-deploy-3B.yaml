@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     app: llama-33-70b-instruct-hf
-    kubernetes.azure.com/scalesetpriority: spot
+    # kubernetes.azure.com/scalesetpriority: spot
     purpose: llama-demo
     run: llama-33-70b-instruct-hf 
   name: llama-33-70b-instruct-hf
@@ -13,14 +13,14 @@ spec:
   selector:
     matchLabels:
       app: llama-33-70b-instruct-hf
-      kubernetes.azure.com/scalesetpriority: spot
+      # kubernetes.azure.com/scalesetpriority: spot
       purpose: llama-demo
       run: llama-33-70b-instruct-hf
   template:
     metadata:
       labels:
         app: llama-33-70b-instruct-hf
-        kubernetes.azure.com/scalesetpriority: spot
+        # kubernetes.azure.com/scalesetpriority: spot
         purpose: llama-demo
         run: llama-33-70b-instruct-hf
     spec:
@@ -52,7 +52,7 @@ spec:
         purpose: llama-demo
       tolerations:
       - effect: NoSchedule
-        key: kubernetes.azure.com/scalesetpriority
+        # key: kubernetes.azure.com/scalesetpriority
         operator: Equal
         value: spot
       - effect: NoSchedule
