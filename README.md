@@ -62,3 +62,21 @@ start vLLM on anynode with tensor_parallel_size=$GPU_COUNT --engine-use-ray
     Security
         Self Signed certs for mutual TLS
 -->
+- To view Dashboard:
+
+`kubectl port-forward service/${RAYCLUSTER_NAME}-head-svc 8265:8265`
+
+- Test the deployment
+
+`kubectl port-forward svc/<NAME> 8000`
+
+```bash
+$ curl http://localhost:8000/v1/chat/completions -H "Content-Type: application/json" -d '{
+      "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+      "messages": [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Provide a brief sentence describing the Ray open-source project."}
+      ],
+      "temperature": 0.7
+    }'
+```

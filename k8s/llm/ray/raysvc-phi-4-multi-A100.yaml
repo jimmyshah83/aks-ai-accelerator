@@ -1,7 +1,7 @@
 apiVersion: ray.io/v1
 kind: RayService
 metadata:
-  name: llama-3-8b
+  name: phi-4
 spec:
   serveConfigV2: |
     applications:
@@ -12,13 +12,13 @@ spec:
       - name: VLLMDeployment
         num_replicas: 1
         ray_actor_options:
-          num_cpus: 8
+          num_cpus: 16
           # NOTE: num_gpus is set automatically based on TENSOR_PARALLELISM
       runtime_env:
         working_dir: "https://github.com/ray-project/kuberay/archive/master.zip"
-        pip: ["vllm==0.6.1.post2"]
+        pip: ["vllm==0.7.3"]
         env_vars:
-          MODEL_ID: "meta-llama/Meta-Llama-3-8B-Instruct"
+          MODEL_ID: "microsoft/phi-4"
           TENSOR_PARALLELISM: "4"
           PIPELINE_PARALLELISM: "1"
   rayClusterConfig:
@@ -31,7 +31,7 @@ spec:
             purpose: ray-head
           containers:
           - name: ray-head
-            image: rayproject/ray-ml:2.33.0.914af0-py311
+            image: rayproject/ray-ml:2.43.0.914af0-py311
             resources:
               limits:
                 cpu: "8"
@@ -71,7 +71,7 @@ spec:
             purpose: llama-demo
           containers:
           - name: llm
-            image: rayproject/ray-ml:2.33.0.914af0-py311
+            image: rayproject/ray-ml:2.43.0.914af0-py311
             env:
             - name: HUGGING_FACE_HUB_TOKEN
               valueFrom:
