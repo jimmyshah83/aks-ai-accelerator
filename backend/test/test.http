@@ -9,10 +9,10 @@ curl http://localhost:8000/v1/chat/completions -H "Content-Type: application/jso
 
 ###
 
-curl http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [
-      {"role": "user", "content": "Who are you?"}
-    ]
-  }'
+# curl http://localhost:8000/v1/chat/completions \
+#   -H "Content-Type: application/json" \
+#   -d '{
+#     "messages": [
+#       {"role": "user", "content": "Who are you?"}
+#     ]
+#   }'

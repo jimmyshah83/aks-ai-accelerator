@@ -168,3 +168,5 @@ cython_debug/
 k8s/llm/huggingface-secret.yaml
 
 miniforge/
+
+backend/test/test.http
