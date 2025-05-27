@@ -71,3 +71,5 @@ resource di_accelerator_vnet_dev_cc_01_name_AzureBastionSubnet 'Microsoft.Networ
     privateLinkServiceNetworkPolicies: 'Enabled'
   }
 }
+
+output appSubnetId string = di_accelerator_vnet_dev_cc_01_name_app_subnet.id

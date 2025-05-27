@@ -5,3 +5,12 @@ module vnetModule 'vnet.bicep' = {
     location: 'canadacentral'
   }
 }
+
+module aksModule 'aks.bicep' = {
+  name: 'aksDeployment'
+  params: {
+    aksClusterName: 'di-aks-cluster-dev-cc-01'
+    location: 'canadacentral'
+    subnetId: vnetModule.outputs.appSubnetId
+  }
+}
