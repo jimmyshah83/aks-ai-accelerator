@@ -1,3 +1,29 @@
+// Module declarations
+module network 'network.bicep' = {
+  name: 'networkModule'
+  // Add required params here
+}
+
+module compute 'compute.bicep' = {
+  name: 'computeModule'
+  // Add required params here
+}
+
+module storage 'storage.bicep' = {
+  name: 'storageModule'
+  // Add required params here
+}
+
+module monitoring 'monitoring.bicep' = {
+  name: 'monitoringModule'
+  // Add required params here
+}
+
+module apim 'apim.bicep' = {
+  name: 'apimModule'
+  // Add required params here
+}
+
 @secure()
 param apis_aks_store_front_path string
 
