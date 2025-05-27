@@ -34,6 +34,12 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-01-01' = {
         enableAutoScaling: true
         minCount: 1
         maxCount: 10
+        nodeTaints: [
+          'sku=ray:NoSchedule'
+        ]
+        nodeLabels: {
+          purpose: 'ray-head'
+        } 
       }
       {
         name: 'gpunodepool'
@@ -46,6 +52,12 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-01-01' = {
         enableAutoScaling: true
         minCount: 1
         maxCount: 5
+        nodeTaints: [
+          'sku=gpu:NoSchedule'
+        ]
+        nodeLabels: {
+          purpose: 'gpu'
+        }
       }
     ]
     networkProfile: {
