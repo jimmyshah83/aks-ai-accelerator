@@ -23,7 +23,49 @@ To Deploy N series GPUs, one needs approval to enable N series on VMs. [See Here
 
 `kubectl port-forward service/${RAYCLUSTER_NAME}-head-svc 8265:8265`
 
-- Test the deployment
+
+## STEPS to deploy
+
+1. Create a resource group
+
+```bash
+az group create --name <your-resource-group-name> --location <your-location>
+```
+
+1. Create the infrastructure using bicep
+
+```bash
+az deployment group create --resource-group <your-resource-group-name> --template-file init.bicep
+```
+
+1. Connect to the AKS cluster
+
+```bash
+az aks get-credentials --resource-group <your-resource-group-name> --name <your-aks-cluster-name>
+```
+
+1. Install the Nvidia device plugin for Kubernetes
+
+```bash
+kubectl apply -f nvidia-device-plugin.yml
+```
+
+1. Install KubeRay for distributed inference
+
+```bash
+helm repo add kuberay https://ray-project.github.io/kuberay-helm/
+helm repo update
+# Install both CRDs and KubeRay operator v1.3.0.
+helm install kuberay-operator kuberay/kuberay-operator --version 1.3.0
+```
+
+1. Deploy the LLM
+
+```bash
+kubectl apply -f raysvc-llama3-8b-A100.yaml
+```
+
+1. Test the deployment
 
 `kubectl port-forward svc/<NAME> 8000`
 
