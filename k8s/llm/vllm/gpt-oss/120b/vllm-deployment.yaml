@@ -1,0 +1,79 @@
+# This will only work with H100 as it has issues with Flash Attention not being awailable on A100 GPUs.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpt-oss-120b
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gpt-oss-120b
+  template:
+    metadata:
+      labels:
+        app: gpt-oss-120b
+    spec:
+      nodeSelector:
+        purpose: llm-rayserve
+      tolerations:
+      - key: "sku"
+        operator: "Equal"
+        value: "gpu"
+        effect: "NoSchedule"
+      containers:
+      - name: gpt-oss-120b
+        image: vllm/vllm-openai:gptoss
+        command: ["/bin/sh", "-c"]
+        args: [
+          "vllm serve openai/gpt-oss-120b --trust-remote-code --tensor-parallel-size 4 --gpu-memory-utilization 0.95"
+        ]
+        env:
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token-secret
+              key: token
+        - name: VLLM_LOGGING_LEVEL
+          value: "DEBUG"
+        - name: NCCL_DEBUG
+          value: "INFO"
+        securityContext:
+          capabilities:
+            add: ["IPC_LOCK"]
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: "80"
+            memory: "700Gi"
+            nvidia.com/gpu: 2
+          requests:
+            cpu: "40"
+            memory: "350Gi"
+            nvidia.com/gpu: 2
+        volumeMounts:
+        - mountPath: /root/.cache/huggingface
+          name: cache-volume
+        - mountPath: /dev/shm
+          name: dshm
+      volumes:
+      - name: cache-volume
+        persistentVolumeClaim:
+          claimName: vllm-models
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 350Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gpt-oss-120b-service
+spec:
+  selector:
+    app: gpt-oss-120b
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000

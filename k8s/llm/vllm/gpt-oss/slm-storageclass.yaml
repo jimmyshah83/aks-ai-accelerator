@@ -1,19 +1,19 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: managed-csi-premium-slm
+  name: managed-csi-premium-vllm
   labels:
-    purpose: slm
+    purpose: vllm
 provisioner: disk.csi.azure.com
 parameters:
   skuName: StandardSSD_LRS
 # Note: For actual node affinity, the pods using this PVC should include:
 # nodeSelector:
-#   purpose: slm
+#   purpose: vllm
 # tolerations:
 # - key: "sku"
 #   operator: "Equal"
-#   value: "slm"
+#   value: "vllm"
 #   effect: "NoSchedule"
 reclaimPolicy: Delete
 allowVolumeExpansion: true
