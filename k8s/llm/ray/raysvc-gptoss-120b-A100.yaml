@@ -5,25 +5,25 @@ metadata:
 spec:
   serveConfigV2: |
     applications:
-    - name: llms
-      import_path: ray.serve.llm:build_openai_app
-      route_prefix: "/"
-      args:
-        llm_configs:
-        - model_loading_config:
-            model_id: gpt-oss-120b
-            model_source: openai/gpt-oss-120b
-          engine_kwargs:
-            dtype: bfloat16
-            max_model_len: 1024
-            device: auto
-            gpu_memory_utilization: 0.75
-          deployment_config:
-            autoscaling_config:
-              min_replicas: 1
-              max_replicas: 4
-              target_ongoing_requests: 64
-            max_ongoing_requests: 128
+    - name: llm
+      route_prefix: /
+      import_path: ray.serve.vllm:VLLMDeployment
+      deployments:
+      - name: VLLMDeployment
+        num_replicas: 1
+        ray_actor_options:
+          num_cpus: 8
+          # NOTE: num_gpus is set automatically based on TENSOR_PARALLELISM
+      runtime_env:
+        pip: >
+          --pre vllm==0.10.1+gptoss \
+          --extra-index-url https://wheels.vllm.ai/gpt-oss/ \
+          --extra-index-url https://download.pytorch.org/whl/nightly/cu128 \
+          --index-strategy unsafe-best-match
+        env_vars:
+          MODEL_ID: "openai/gpt-oss-20b"
+          TENSOR_PARALLELISM: "4"
+          PIPELINE_PARALLELISM: "1"
   rayClusterConfig:
     headGroupSpec:
       rayStartParams:

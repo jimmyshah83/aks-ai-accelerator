@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gptoss-20b-deployment
+  labels:
+    app: gptoss-20b
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gptoss-20b
+  template:
+    metadata:
+      labels:
+        app: gptoss-20b
+    spec:
+      # Node selector to ensure pods are scheduled on SLM nodes
+      nodeSelector:
+        purpose: slm
+      # Toleration for the SLM node taint
+      tolerations:
+      - key: "sku"
+        operator: "Equal"
+        value: "slm"
+        effect: "NoSchedule"
+      containers:
+      - name: gptoss-20b
+        image: vllm/vllm-openai:latest
+        command: ["/bin/sh", "-c"]
+        args: [
+          "vllm serve openai/gpt-oss-20b --device-type cpu --dtype float16 --max-model-len 2048 --enforce-eager"
+        ]
+        env:
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token-secret
+              key: token
+        - name: VLLM_LOGGING_LEVEL
+          value: "DEBUG"
+        - name: CUDA_VISIBLE_DEVICES
+          value: ""
+        - name: VLLM_USE_MODELSCOPE
+          value: "False"
+        - name: VLLM_CPU_KVCACHE_SPACE
+          value: "8"
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - name: gptoss-20b-storage
+          mountPath: /root/.cache/huggingface
+        resources:
+          limits:
+            memory: "50Gi"
+            cpu: "27"
+          requests:
+            memory: "50Gi"
+            cpu: "27"
+      volumes:
+      - name: gptoss-20b-storage
+        persistentVolumeClaim:
+          claimName: slm-models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gptoss-20b-service
+spec:
+  selector:
+    app: gptoss-20b
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+  type: ClusterIP

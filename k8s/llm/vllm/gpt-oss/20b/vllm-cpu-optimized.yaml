@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gptoss-cpu-deployment
+  labels:
+    app: gptoss-cpu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gptoss-cpu
+  template:
+    metadata:
+      labels:
+        app: gptoss-cpu
+    spec:
+      # Node selector to ensure pods are scheduled on SLM nodes
+      nodeSelector:
+        purpose: slm
+      # Toleration for the SLM node taint
+      tolerations:
+      - key: "sku"
+        operator: "Equal"
+        value: "slm"
+        effect: "NoSchedule"
+      containers:
+      - name: gptoss-cpu
+        image: vllm/vllm-openai:latest
+        command: ["/bin/sh", "-c"]
+        args: [
+          "pip install psutil && vllm serve microsoft/DialoGPT-medium --device cpu --dtype float16 --max-model-len 1024 --enforce-eager --disable-log-stats"
+        ]
+        env:
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token-secret
+              key: token
+        - name: VLLM_LOGGING_LEVEL
+          value: "INFO"
+        - name: CUDA_VISIBLE_DEVICES
+          value: ""
+        - name: VLLM_USE_MODELSCOPE
+          value: "False"
+        - name: VLLM_CPU_KVCACHE_SPACE
+          value: "4"
+        - name: OMP_NUM_THREADS
+          value: "27"
+        - name: VLLM_ENGINE_ITERATION_TIMEOUT_S
+          value: "120"
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - name: gptoss-storage
+          mountPath: /root/.cache/huggingface
+        resources:
+          limits:
+            memory: "32Gi"
+            cpu: "27"
+          requests:
+            memory: "24Gi"
+            cpu: "20"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 120
+          periodSeconds: 30
+      volumes:
+      - name: gptoss-storage
+        persistentVolumeClaim:
+          claimName: slm-models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gptoss-cpu-service
+spec:
+  selector:
+    app: gptoss-cpu
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+  type: ClusterIP

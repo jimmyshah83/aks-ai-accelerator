@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: slm-models
+  labels:
+    purpose: slm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  storageClassName: managed-csi-premium-slm
+  resources:
+    requests:
+      storage: 50Gi
